@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // Use CORS with specific origin
 const allowedOrigins = ['https://vijayofficiaul.github.io']; // Add your frontend URL here
