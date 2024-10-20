@@ -1,15 +1,24 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors'); // Import the cors package
 const { Pool } = require('pg');
 
 // Initialize the app and PostgreSQL connection
 const app = express();
 app.use(express.json());
 
+// CORS setup
+const allowedOrigins = ['https://vijayofficiaul.github.io']; // Your GitHub Pages URL
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true // If you need to support credentials like cookies
+}));
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false // For secure connection
     }
 });
 
