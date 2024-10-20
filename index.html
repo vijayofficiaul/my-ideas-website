@@ -96,12 +96,15 @@
             const ideasList = document.getElementById('ideasList');
             const ideaContent = document.getElementById('ideaContent');
 
-            const apiUrl = 'https://my-ideas-website.onrender.com/ideas'; // Replace with your Render backend API URL
+            const apiUrl = 'https://my-ideas-website.onrender.com/ideas'; // Update with your Render backend API URL
 
             // Function to fetch and display all ideas
             const fetchIdeas = async () => {
                 try {
                     const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
                     const ideas = await response.json();
 
                     // Clear the list before re-rendering
@@ -115,6 +118,7 @@
                     });
                 } catch (error) {
                     console.error('Error fetching ideas:', error);
+                    alert('Failed to fetch ideas. Please try again later.');
                 }
             };
 
@@ -138,15 +142,16 @@
                         body: JSON.stringify({ content: idea })
                     });
 
-                    if (response.ok) {
-                        ideaContent.value = '';  // Clear the textarea
-                        fetchIdeas();            // Refresh the ideas list
-                    } else {
+                    if (!response.ok) {
                         const errorData = await response.json();
-                        alert(`Error: ${errorData.error}`);
+                        throw new Error(errorData.error || 'Failed to submit idea');
                     }
+
+                    ideaContent.value = '';  // Clear the textarea
+                    fetchIdeas();            // Refresh the ideas list
                 } catch (error) {
                     console.error('Error submitting idea:', error);
+                    alert('Failed to submit idea. Please try again later.');
                 }
             });
 
