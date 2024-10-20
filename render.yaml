@@ -3,7 +3,7 @@ services:
     name: my-ideas-app
     env: node
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node index.js
     autoDeploy: true
     envVars:
       DATABASE_URL: postgresql://my_ideas_db_user:2qmqCnIncQWqcwe8mbiA35AcY8pWqRwZ@dpg-cs9t3ebqf0us739mo08g-a.oregon-postgres.render.com/my_ideas_db
