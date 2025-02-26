@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideas Submission</title>
+    <style>
+        /* CSS (Embedded) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        li {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Submit Your Idea</h1>
+        
+        <!-- Form for submitting a new idea -->
+        <form id="ideaForm">
+            <textarea id="ideaContent" placeholder="Enter your idea here..." required></textarea>
+            <button type="submit">Submit Idea</button>
+        </form>
+
+        <!-- Section to display all ideas -->
+        <h2>All Ideas</h2>
+        <ul id="ideasList"></ul>
+    </div>
+
+    <script>
+        // JavaScript (Embedded)
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('ideaForm');
+            const ideasList = document.getElementById('ideasList');
+            const ideaContent = document.getElementById('ideaContent');
+
+            const apiUrl = 'https://my-ideas-website.onrender.com/ideas'; // Update with your Render backend API URL
+
+            // Function to fetch and display all ideas
+            const fetchIdeas = async () => {
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const ideas = await response.json();
+
+                    // Clear the list before re-rendering
+                    ideasList.innerHTML = '';
+
+                    // Render each idea in the list
+                    ideas.forEach(idea => {
+                        const li = document.createElement('li');
+                        li.textContent = idea.content;
+                        ideasList.appendChild(li);
+                    });
+                } catch (error) {
+                    console.error('Error fetching ideas:', error);
+                    alert('Failed to fetch ideas. Please try again later.');
+                }
+            };
+
+            // Submit a new idea
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent the form from submitting the usual way
+
+                const idea = ideaContent.value.trim();
+                if (!idea) {
+                    alert('Please enter an idea.');
+                    return;
+                }
+
+                try {
+                    // Send the new idea to the backend API
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ content: idea })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to submit idea');
+                    }
+
+                    ideaContent.value = '';  // Clear the textarea
+                    fetchIdeas();            // Refresh the ideas list
+                } catch (error) {
+                    console.error('Error submitting idea:', error);
+                    alert('Failed to submit idea. Please try again later.');
+                }
+            });
+
+            // Fetch and display ideas on page load
+            fetchIdeas();
+        });
+    </script>
+</body>
+</html>
