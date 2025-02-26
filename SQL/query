@@ -1,50 +1,66 @@
-require('dotenv').config(); // Load environment variables from .env
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 
-// Create a new pool to connect to the database
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false  // Important for cloud-hosted PostgreSQL services
+    ssl: { rejectUnauthorized: false }
+});
+
+// API to submit an idea
+app.post('/submit', async (req, res) => {
+    const { user_id, title, content } = req.body;
+    try {
+        const result = await pool.query(
+            "INSERT INTO ideas (user_id, title, content) VALUES ($1, $2, $3) RETURNING *",
+            [user_id, title, content]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Function to create necessary tables
-const createTables = async () => {
-    const query = `
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,a
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS ideas (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-            title VARCHAR(255) NOT NULL,
-            content TEXT NOT NULL,
-            status VARCHAR(50) DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS reviews (
-            id SERIAL PRIMARY KEY,
-            idea_id INTEGER REFERENCES ideas(id) ON DELETE CASCADE,
-            reviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-            review_comments TEXT,
-            reviewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `;
-    
+// API to get all submitted ideas
+app.get('/ideas', async (req, res) => {
     try {
-        await pool.query(query);
-        console.log('Tables created successfully.');
-    } catch (error) {
-        console.error('Error creating tables:', error.message);
-    } finally {
-        pool.end(); // Close the connection
+        const result = await pool.query("SELECT * FROM ideas WHERE status = 'pending'");
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-};
+});
 
-// Run the createTables function
-createTables();
+// API to review and approve an idea
+app.post('/review', async (req, res) => {
+    const { idea_id, reviewer_id, review_comments } = req.body;
+    try {
+        await pool.query("UPDATE ideas SET status = 'approved' WHERE id = $1", [idea_id]);
+        await pool.query(
+            "INSERT INTO reviews (idea_id, reviewer_id, review_comments) VALUES ($1, $2, $3)",
+            [idea_id, reviewer_id, review_comments]
+        );
+        res.json({ message: "Idea approved successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API to fetch published ideas
+app.get('/published', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM ideas WHERE status = 'published'");
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
